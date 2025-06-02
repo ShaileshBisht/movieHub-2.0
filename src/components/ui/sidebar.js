@@ -1,268 +1,151 @@
 "use client";
 
-import { useState } from "react";
-import {
-  ChevronDown,
-  ChevronRight,
-  Film,
-  Star,
-  Calendar,
-  Zap,
-  Menu,
-  X,
-  Sword,
-  Heart,
-  Laugh,
-  Skull,
-  Zap as Lightning,
-  Users,
-  Music,
-  Sparkles,
-  Shield,
-  Rocket,
-  Ghost,
-  Crown,
-  Mountain,
-  Camera,
-} from "lucide-react";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { ChevronDown, ChevronRight, Film, Star, Calendar, Clock, TrendingUp, Home as HomeIcon, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useGetMovieGenresQuery } from "../../store/api/tmdbApi";
 
 const categories = [
-  { id: null, label: "Home", icon: Film, endpoint: "trending" },
+  { id: null, label: "Home", icon: HomeIcon, endpoint: "trending" },
   { id: "trending", label: "Trending", icon: Zap, endpoint: "trending" },
   { id: "popular", label: "Popular", icon: Star, endpoint: "popular" },
-  { id: "top_rated", label: "Top Rated", icon: Star, endpoint: "top_rated" },
+  { id: "top_rated", label: "Top Rated", icon: TrendingUp, endpoint: "top_rated" },
   { id: "now_playing", label: "Now Playing", icon: Film, endpoint: "now_playing" },
   { id: "upcoming", label: "Upcoming", icon: Calendar, endpoint: "upcoming" },
 ];
 
-// Genre icon mapping
-const getGenreIcon = (genreName) => {
-  const name = genreName.toLowerCase();
+const genres = [
+  { id: 28, name: "Action" },
+  { id: 12, name: "Adventure" },
+  { id: 16, name: "Animation" },
+  { id: 35, name: "Comedy" },
+  { id: 80, name: "Crime" },
+  { id: 99, name: "Documentary" },
+  { id: 18, name: "Drama" },
+  { id: 10751, name: "Family" },
+  { id: 14, name: "Fantasy" },
+  { id: 36, name: "History" },
+  { id: 27, name: "Horror" },
+  { id: 10402, name: "Music" },
+  { id: 9648, name: "Mystery" },
+  { id: 10749, name: "Romance" },
+  { id: 878, name: "Sci-Fi" },
+  { id: 10770, name: "TV Movie" },
+  { id: 53, name: "Thriller" },
+  { id: 10752, name: "War" },
+  { id: 37, name: "Western" },
+];
 
-  if (name.includes("action")) return Sword;
-  if (name.includes("adventure")) return Mountain;
-  if (name.includes("animation")) return Sparkles;
-  if (name.includes("comedy")) return Laugh;
-  if (name.includes("crime")) return Shield;
-  if (name.includes("documentary")) return Camera;
-  if (name.includes("drama")) return Heart;
-  if (name.includes("family")) return Users;
-  if (name.includes("fantasy")) return Crown;
-  if (name.includes("history")) return Calendar;
-  if (name.includes("horror")) return Ghost;
-  if (name.includes("music")) return Music;
-  if (name.includes("mystery")) return Skull;
-  if (name.includes("romance")) return Heart;
-  if (name.includes("science fiction") || name.includes("sci-fi")) return Rocket;
-  if (name.includes("thriller")) return Lightning;
-  if (name.includes("war")) return Sword;
-  if (name.includes("western")) return Star;
-
-  return Film; // Default icon
-};
-
-export default function Sidebar({ onCategorySelect, onGenreSelect, selectedCategory, selectedGenre, onToggle }) {
-  const [isCollapsed, setIsCollapsed] = useState(false);
-  const [expandedSections, setExpandedSections] = useState({
-    categories: true,
-    genres: true,
-  });
+export default function Sidebar({ selectedCategory, selectedGenre, onCategorySelect, onGenreSelect, onToggle }) {
+  const router = useRouter();
+  const [isGenresExpanded, setIsGenresExpanded] = useState(false);
 
   const { data: genresData, isLoading: genresLoading } = useGetMovieGenresQuery();
 
-  const toggleSidebar = () => {
-    const newCollapsedState = !isCollapsed;
-    setIsCollapsed(newCollapsedState);
-    // Notify parent component about the toggle
-    if (onToggle) {
-      onToggle(newCollapsedState);
+  const handleCategoryClick = (categoryId) => {
+    if (categoryId === null) {
+      // Home button - clear all parameters
+      router.push("/");
+    } else {
+      onCategorySelect(categoryId);
     }
   };
 
-  const toggleSection = (section) => {
-    if (isCollapsed) return;
-    setExpandedSections((prev) => ({
-      ...prev,
-      [section]: !prev[section],
-    }));
+  const handleGenreClick = (genreId) => {
+    onGenreSelect(genreId);
   };
 
-  const handleCategoryClick = (category) => {
-    onCategorySelect(category);
-  };
-
-  const handleGenreClick = (genre) => {
-    onGenreSelect(genre);
+  const toggleGenres = () => {
+    setIsGenresExpanded(!isGenresExpanded);
   };
 
   return (
-    <div
-      className={`${
-        isCollapsed ? "w-16" : "w-64"
-      } bg-gradient-to-b from-slate-900/95 via-purple-900/90 to-slate-900/95 backdrop-blur-md border-r border-purple-500/20 h-dvh overflow-y-auto transition-all duration-300 ease-in-out shadow-2xl flex flex-col`}
-    >
-      {/* Toggle Button */}
-      <div className="p-4 border-b border-purple-500/20 flex justify-center bg-black/20 flex-shrink-0">
-        <Button
-          variant="ghost"
-          size="sm"
-          className="text-white hover:bg-purple-600/30 hover:text-purple-200 p-2 rounded-lg transition-all duration-200"
-          onClick={toggleSidebar}
-        >
-          {isCollapsed ? <Menu className="h-4 w-4" /> : <X className="h-4 w-4" />}
-        </Button>
+    <div className="h-full flex flex-col bg-black/90 backdrop-blur-sm text-white">
+      {/* Header - Fixed */}
+      <div className="flex-shrink-0 p-4 sm:p-6 border-b border-white/10">
+        <div className="flex items-center gap-2 sm:gap-3">
+          <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg flex items-center justify-center">
+            <span className="text-white font-bold text-lg sm:text-xl">M</span>
+          </div>
+          <div>
+            <h2 className="text-lg sm:text-xl font-bold">MovieHub</h2>
+            <p className="text-xs sm:text-sm text-gray-400">Discover Movies</p>
+          </div>
+        </div>
       </div>
 
-      <div className="p-4 flex-1 overflow-y-auto">
-        {/* Categories Section */}
-        <div className="mb-6">
-          {!isCollapsed ? (
-            <>
-              <Button
-                variant="ghost"
-                className="w-full justify-between text-white hover:bg-purple-600/20 p-3 h-auto mb-3 rounded-lg border border-purple-500/20"
-                onClick={() => toggleSection("categories")}
-              >
-                <span className="font-semibold text-sm text-purple-200">Categories</span>
-                {expandedSections.categories ? (
-                  <ChevronDown className="h-4 w-4 text-purple-300" />
-                ) : (
-                  <ChevronRight className="h-4 w-4 text-purple-300" />
-                )}
-              </Button>
-
-              {expandedSections.categories && (
-                <div className="space-y-2 ml-2">
-                  {categories.map((category) => {
-                    const Icon = category.icon;
-                    const isSelected = selectedCategory === category.id;
-
-                    return (
-                      <Button
-                        key={category.id}
-                        variant="ghost"
-                        className={`w-full justify-start text-left p-3 h-auto text-sm rounded-lg transition-all duration-200 ${
-                          isSelected
-                            ? "bg-gradient-to-r from-purple-600/50 to-pink-600/30 text-white border-l-4 border-purple-400 shadow-lg"
-                            : "text-gray-300 hover:bg-purple-600/20 hover:text-white hover:border-l-2 hover:border-purple-400/50"
-                        }`}
-                        onClick={() => handleCategoryClick(category.id)}
-                      >
-                        <Icon className="h-4 w-4 mr-3" />
-                        {category.label}
-                      </Button>
-                    );
-                  })}
-                </div>
-              )}
-            </>
-          ) : (
-            // Collapsed categories - show only icons
-            <div className="space-y-2 mb-6">
+      {/* Navigation - Scrollable */}
+      <div className="flex-1 overflow-y-auto">
+        <nav className="p-4 sm:p-6 space-y-6 sm:space-y-8">
+          {/* Categories */}
+          <div>
+            <h3 className="text-sm sm:text-base font-semibold text-gray-300 mb-3 sm:mb-4 uppercase tracking-wider">Categories</h3>
+            <ul className="space-y-1 sm:space-y-2">
               {categories.map((category) => {
                 const Icon = category.icon;
-                const isSelected = selectedCategory === category.id;
+                const isActive = selectedCategory === category.id;
 
                 return (
-                  <Button
-                    key={category.id}
-                    variant="ghost"
-                    size="sm"
-                    className={`w-full p-3 h-10 flex justify-center rounded-lg transition-all duration-200 ${
-                      isSelected
-                        ? "bg-gradient-to-r from-purple-600/50 to-pink-600/30 text-white border-l-4 border-purple-400 shadow-lg"
-                        : "text-gray-300 hover:bg-purple-600/20 hover:text-white"
-                    }`}
-                    onClick={() => handleCategoryClick(category.id)}
-                    title={category.label}
-                  >
-                    <Icon className="h-4 w-4" />
-                  </Button>
+                  <li key={category.id || "home"}>
+                    <button
+                      onClick={() => handleCategoryClick(category.id)}
+                      className={`w-full flex items-center gap-3 px-3 py-2.5 sm:py-3 rounded-lg text-left transition-all duration-200 ${
+                        isActive
+                          ? "bg-purple-600 text-white shadow-lg shadow-purple-500/25"
+                          : "text-gray-300 hover:bg-white/10 hover:text-white"
+                      }`}
+                    >
+                      <Icon className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
+                      <span className="text-sm sm:text-base font-medium truncate">{category.label}</span>
+                    </button>
+                  </li>
                 );
               })}
-            </div>
-          )}
-        </div>
+            </ul>
+          </div>
 
-        {/* Genres Section */}
-        <div className="mb-4">
-          {!isCollapsed ? (
-            <>
-              <Button
-                variant="ghost"
-                className="w-full justify-between text-white hover:bg-purple-600/20 p-3 h-auto mb-3 rounded-lg border border-purple-500/20"
-                onClick={() => toggleSection("genres")}
-              >
-                <span className="font-semibold text-sm text-purple-200">Genres</span>
-                {expandedSections.genres ? (
-                  <ChevronDown className="h-4 w-4 text-purple-300" />
-                ) : (
-                  <ChevronRight className="h-4 w-4 text-purple-300" />
-                )}
-              </Button>
+          {/* Genres */}
+          <div>
+            <button
+              onClick={toggleGenres}
+              className="w-full flex items-center justify-between text-sm sm:text-base font-semibold text-gray-300 mb-3 sm:mb-4 uppercase tracking-wider hover:text-white transition-colors"
+            >
+              <span>Genres</span>
+              {isGenresExpanded ? <ChevronDown className="w-4 h-4 sm:w-5 sm:h-5" /> : <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5" />}
+            </button>
 
-              {expandedSections.genres && (
-                <div className="space-y-1 max-h-80 overflow-y-auto ml-2 pr-2 scrollbar-thin scrollbar-thumb-purple-600/50 scrollbar-track-transparent">
-                  {genresLoading ? (
-                    <div className="space-y-2">
-                      {[...Array(5)].map((_, i) => (
-                        <div key={i} className="h-8 bg-gradient-to-r from-purple-700/30 to-pink-700/20 rounded-lg animate-pulse"></div>
-                      ))}
-                    </div>
-                  ) : (
-                    genresData?.genres?.map((genre) => {
-                      const isSelected = selectedGenre === genre.id;
-                      const GenreIcon = getGenreIcon(genre.name);
-
-                      return (
-                        <Button
-                          key={genre.id}
-                          variant="ghost"
-                          className={`w-full justify-start text-left p-2 h-auto text-sm rounded-lg transition-all duration-200 ${
-                            isSelected
-                              ? "bg-gradient-to-r from-purple-600/50 to-pink-600/30 text-white border-l-4 border-purple-400 shadow-lg"
-                              : "text-gray-300 hover:bg-purple-600/20 hover:text-white hover:border-l-2 hover:border-purple-400/50"
-                          }`}
-                          onClick={() => handleGenreClick(genre.id)}
-                        >
-                          <GenreIcon className="h-3 w-3 mr-2" />
-                          {genre.name}
-                        </Button>
-                      );
-                    })
-                  )}
-                </div>
-              )}
-            </>
-          ) : (
-            // Collapsed genres - show popular genres as icons
-            <div className="space-y-2">
-              {!genresLoading &&
-                genresData?.genres?.slice(0, 10).map((genre) => {
-                  const isSelected = selectedGenre === genre.id;
-                  const GenreIcon = getGenreIcon(genre.name);
+            {isGenresExpanded && (
+              <ul className="space-y-1">
+                {genres.map((genre) => {
+                  const isActive = selectedGenre === genre.id;
 
                   return (
-                    <Button
-                      key={genre.id}
-                      variant="ghost"
-                      size="sm"
-                      className={`w-full p-3 h-10 flex justify-center rounded-lg transition-all duration-200 ${
-                        isSelected
-                          ? "bg-gradient-to-r from-purple-600/50 to-pink-600/30 text-white border-l-4 border-purple-400 shadow-lg"
-                          : "text-gray-300 hover:bg-purple-600/20 hover:text-white"
-                      }`}
-                      onClick={() => handleGenreClick(genre.id)}
-                      title={genre.name}
-                    >
-                      <GenreIcon className="h-3 w-3" />
-                    </Button>
+                    <li key={genre.id}>
+                      <button
+                        onClick={() => handleGenreClick(genre.id)}
+                        className={`w-full text-left px-3 py-2 sm:py-2.5 rounded-lg transition-all duration-200 ${
+                          isActive
+                            ? "bg-pink-600 text-white shadow-lg shadow-pink-500/25"
+                            : "text-gray-300 hover:bg-white/10 hover:text-white"
+                        }`}
+                      >
+                        <span className="text-sm sm:text-base truncate">{genre.name}</span>
+                      </button>
+                    </li>
                   );
                 })}
-            </div>
-          )}
+              </ul>
+            )}
+          </div>
+        </nav>
+      </div>
+
+      {/* Footer - Fixed */}
+      <div className="flex-shrink-0 p-4 sm:p-6 border-t border-white/10">
+        <div className="text-center">
+          <p className="text-xs sm:text-sm text-gray-400">Powered by TMDB</p>
+          <p className="text-xs text-gray-500 mt-1">© 2024 MovieHub</p>
         </div>
       </div>
     </div>

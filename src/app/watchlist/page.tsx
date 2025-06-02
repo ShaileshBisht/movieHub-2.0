@@ -1,83 +1,36 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Star, Calendar, Trash2, ArrowLeft, Heart } from "lucide-react";
+import { Heart, Star, Calendar, Trash2, Play } from "lucide-react";
 import Sidebar from "@/components/ui/sidebar";
-import { getWatchlist, removeFromWatchlist, clearWatchlist } from "@/utils/watchlist";
-
-interface WatchlistMovie {
-  id: number;
-  title: string;
-  poster_path: string | null;
-  backdrop_path: string | null;
-  vote_average: number;
-  release_date: string;
-  overview: string;
-  genres: { id: number; name: string }[];
-  addedAt: string;
-}
-
-const getImageUrl = (path: string | null, size: string = "w500") => {
-  if (!path) return "/placeholder-movie.jpg";
-  return `https://image.tmdb.org/t/p/${size}${path}`;
-};
-
-const formatReleaseDate = (dateString: string) => {
-  return new Date(dateString).toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-  });
-};
-
-const formatAddedDate = (dateString: string) => {
-  return new Date(dateString).toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-  });
-};
+import Navbar from "../../components/Navbar";
+import { PageLoadingSpinner } from "../../components/LoadingSpinner";
+import { useWatchlist } from "../../hooks/useWatchlist";
+import { useNavigation } from "../../hooks/useNavigation";
+import { getImageUrl } from "../../utils/movieUtils";
+import { Movie } from "../../types/movie";
+import { Button } from "@/components/ui/button";
 
 export default function WatchlistPage() {
-  const router = useRouter();
-  const [watchlist, setWatchlist] = useState<WatchlistMovie[]>([]);
-  const [sidebarWidth, setSidebarWidth] = useState(256);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [selectedGenre, setSelectedGenre] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Load watchlist from localStorage
+  const { watchlist, removeFromWatchlist, clearWatchlist } = useWatchlist();
+  const { navigateToMovie, navigateToCategory, navigateToGenre, navigateToSearch, navigateToHome } = useNavigation();
+
   useEffect(() => {
-    const loadWatchlist = () => {
-      const savedWatchlist = getWatchlist();
-      setWatchlist(savedWatchlist);
+    // Simulate loading time for consistency
+    const timer = setTimeout(() => {
       setIsLoading(false);
-    };
+    }, 500);
 
-    loadWatchlist();
-
-    // Listen for watchlist updates
-    const handleWatchlistUpdate = () => {
-      loadWatchlist();
-    };
-
-    window.addEventListener("watchlistUpdated", handleWatchlistUpdate);
-    return () => window.removeEventListener("watchlistUpdated", handleWatchlistUpdate);
+    return () => clearTimeout(timer);
   }, []);
 
-  // Sidebar handlers
-  const handleCategorySelect = (category: string) => {
-    router.push(`/?category=${category}`);
-  };
-
-  const handleGenreSelect = (genreId: number) => {
-    router.push(`/?genre=${genreId}`);
-  };
-
-  const handleSidebarToggle = (isCollapsed: boolean) => {
-    setSidebarWidth(isCollapsed ? 64 : 256);
+  const handleMovieClick = (movieId: number) => {
+    navigateToMovie(movieId);
   };
 
   const handleRemoveFromWatchlist = (movieId: number, e: React.MouseEvent) => {
@@ -86,157 +39,183 @@ export default function WatchlistPage() {
   };
 
   const handleClearWatchlist = () => {
-    if (window.confirm("Are you sure you want to clear your entire watchlist?")) {
-      clearWatchlist();
+    if (watchlist.length > 0) {
+      const confirmed = window.confirm("Are you sure you want to clear your entire watchlist?");
+      if (confirmed) {
+        clearWatchlist();
+      }
     }
   };
 
-  const handleMovieClick = (movieId: number) => {
-    router.push(`/movie/${movieId}`);
+  const handleCategorySelect = (categoryId: string | null) => {
+    setSelectedCategory(categoryId);
+    navigateToCategory(categoryId);
   };
 
-  const handleBackClick = () => {
-    router.push("/");
+  const handleGenreSelect = (genreId: number | null) => {
+    setSelectedGenre(genreId);
+    navigateToGenre(genreId);
+  };
+
+  const handleSearch = (query: string) => {
+    navigateToSearch(query);
   };
 
   if (isLoading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-purple-400"></div>
-      </div>
-    );
+    return <PageLoadingSpinner text="Loading your watchlist..." />;
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
-      <div className="flex">
-        {/* Sidebar - Fixed Position */}
-        <div className="fixed left-0 top-0 z-40">
-          <Sidebar
-            onCategorySelect={handleCategorySelect}
-            onGenreSelect={handleGenreSelect}
-            selectedCategory={null}
-            selectedGenre={null}
-            onToggle={handleSidebarToggle}
-          />
-        </div>
+    <div className="h-screen flex overflow-hidden bg-black">
+      {/* Sidebar */}
+      <div
+        className={`fixed inset-y-0 left-0 z-50 w-64 transform transition-transform duration-300 ease-in-out lg:relative lg:translate-x-0 ${
+          isSidebarOpen ? "translate-x-0" : "-translate-x-full"
+        }`}
+      >
+        <Sidebar
+          selectedCategory={selectedCategory}
+          selectedGenre={selectedGenre}
+          onCategorySelect={handleCategorySelect}
+          onGenreSelect={handleGenreSelect}
+          onToggle={() => setIsSidebarOpen(!isSidebarOpen)}
+        />
+      </div>
 
-        {/* Main Content */}
-        <div className="flex-1 w-full overflow-y-auto transition-all duration-300 ease-in-out" style={{ marginLeft: `${sidebarWidth}px` }}>
-          {/* Header */}
-          <header className="border-b border-white/10 backdrop-blur-sm bg-black/20 sticky top-0 z-30">
-            <div className="container mx-auto px-4 py-6">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <Button onClick={handleBackClick} variant="ghost" className="text-white hover:bg-purple-600/20 p-2">
-                    <ArrowLeft className="w-5 h-5" />
-                  </Button>
+      {/* Overlay for mobile */}
+      {isSidebarOpen && <div className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden" onClick={() => setIsSidebarOpen(false)} />}
+
+      {/* Main Content */}
+      <div className="flex-1 flex flex-col overflow-hidden">
+        {/* Navigation */}
+        <Navbar onSidebarToggle={() => setIsSidebarOpen(!isSidebarOpen)} isSidebarOpen={isSidebarOpen} onSearch={handleSearch} />
+
+        {/* Watchlist Content - Scrollable */}
+        <div className="flex-1 overflow-y-auto bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900">
+          <main className="px-4 sm:px-6 lg:px-8 py-8 sm:py-12 lg:py-16">
+            <div className="max-w-7xl mx-auto">
+              {/* Page Header */}
+              <div className="flex items-center justify-between mb-8 sm:mb-12">
+                <div className="flex items-center gap-3">
+                  <Heart className="w-8 h-8 sm:w-10 sm:h-10 text-pink-500 fill-current" />
                   <div>
-                    <h1 className="text-3xl font-bold text-white flex items-center gap-3">
-                      <Heart className="w-8 h-8 text-pink-400" />
-                      My Watchlist
-                    </h1>
-                    <p className="text-purple-200 mt-1">
-                      {watchlist.length} {watchlist.length === 1 ? "movie" : "movies"} saved
+                    <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white">My Watchlist</h1>
+                    <p className="text-gray-300 text-sm sm:text-base lg:text-lg mt-2">
+                      {watchlist.length === 0
+                        ? "Your watchlist is empty. Start adding movies you want to watch!"
+                        : `You have ${watchlist.length} movie${watchlist.length === 1 ? "" : "s"} in your watchlist`}
                     </p>
                   </div>
                 </div>
 
                 {watchlist.length > 0 && (
-                  <Button
-                    onClick={handleClearWatchlist}
-                    variant="outline"
-                    className="border-red-500/50 text-red-400 hover:bg-red-500/20 hover:border-red-400"
-                  >
-                    <Trash2 className="w-4 h-4 mr-2" />
-                    Clear All
+                  <Button onClick={handleClearWatchlist} variant="destructive" className="flex items-center gap-2">
+                    <Trash2 className="w-4 h-4" />
+                    <span className="hidden sm:inline">Clear All</span>
                   </Button>
                 )}
               </div>
-            </div>
-          </header>
 
-          {/* Content */}
-          <main className="container mx-auto px-4 py-8">
-            {watchlist.length === 0 ? (
-              // Empty State
-              <div className="text-center py-20">
-                <Heart className="w-24 h-24 text-purple-400/50 mx-auto mb-6" />
-                <h2 className="text-2xl font-bold text-white mb-4">Your watchlist is empty</h2>
-                <p className="text-gray-400 mb-8 max-w-md mx-auto">
-                  Start adding movies to your watchlist by clicking the &quot;WATCHLIST +1&quot; button on any movie details page.
-                </p>
-                <Button onClick={handleBackClick} className="bg-purple-600 hover:bg-purple-700 text-white px-8 py-3">
-                  Discover Movies
-                </Button>
-              </div>
-            ) : (
-              // Movies Grid
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                {watchlist.map((movie) => (
-                  <Card
-                    key={movie.id}
-                    className="bg-white/10 border-white/20 text-white hover:bg-white/20 transition-all duration-300 transform hover:scale-105 cursor-pointer group"
-                    onClick={() => handleMovieClick(movie.id)}
-                  >
-                    <CardHeader className="p-0 relative">
-                      <div className="relative">
-                        <img
-                          src={getImageUrl(movie.poster_path)}
-                          alt={movie.title}
-                          className="w-full h-64 object-cover rounded-t-lg"
-                          onError={(e) => {
-                            e.currentTarget.src = "/placeholder-movie.jpg";
-                          }}
-                        />
+              {/* Empty State */}
+              {watchlist.length === 0 ? (
+                <div className="text-center py-12 sm:py-16 lg:py-20">
+                  <div className="max-w-md mx-auto space-y-6">
+                    <div className="w-24 h-24 sm:w-32 sm:h-32 mx-auto bg-white/10 rounded-full flex items-center justify-center">
+                      <Heart className="w-12 h-12 sm:w-16 sm:h-16 text-gray-400" />
+                    </div>
+                    <div className="space-y-3">
+                      <h2 className="text-xl sm:text-2xl font-semibold text-white">No movies in your watchlist yet</h2>
+                      <p className="text-gray-400 text-sm sm:text-base">
+                        Browse movies and click the heart icon to add them to your watchlist
+                      </p>
+                    </div>
+                    <Button onClick={navigateToHome} className="bg-purple-600 hover:bg-purple-700">
+                      Browse Movies
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  {/* Movies Grid */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8 mb-12">
+                    {watchlist.map((movie: Movie) => (
+                      <div key={movie.id} className="group cursor-pointer" onClick={() => handleMovieClick(movie.id)}>
+                        <div className="relative overflow-hidden rounded-lg mb-3 aspect-[2/3] bg-gray-800">
+                          <img
+                            src={getImageUrl(movie.poster_path)}
+                            alt={movie.title}
+                            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+                            loading="lazy"
+                            onError={(e) => {
+                              (e.target as HTMLImageElement).src = "/api/placeholder/500/750";
+                            }}
+                          />
 
-                        {/* Rating Badge */}
-                        <Badge className="absolute top-2 right-2 bg-yellow-500 text-black">
-                          <Star className="w-3 h-3 mr-1" />
-                          {movie.vote_average.toFixed(1)}
-                        </Badge>
+                          {/* Overlay */}
+                          <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                            <Play className="w-8 h-8 sm:w-12 sm:h-12 text-white" />
+                          </div>
 
-                        {/* Remove Button */}
-                        <Button
-                          onClick={(e) => handleRemoveFromWatchlist(movie.id, e)}
-                          className="absolute top-2 left-2 bg-red-500/80 hover:bg-red-500 text-white p-2 h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
-                          size="sm"
-                        >
-                          <Trash2 className="w-3 h-3" />
-                        </Button>
-                      </div>
-                    </CardHeader>
+                          {/* Rating Badge */}
+                          <div className="absolute top-2 left-2 bg-black/80 backdrop-blur-sm rounded-full px-2 py-1 flex items-center space-x-1">
+                            <Star className="w-3 h-3 text-yellow-400 fill-current" />
+                            <span className="text-white text-xs font-semibold">{movie.vote_average.toFixed(1)}</span>
+                          </div>
 
-                    <CardContent className="p-4">
-                      <CardTitle className="text-lg mb-2 line-clamp-2">{movie.title}</CardTitle>
+                          {/* Remove Button */}
+                          <button
+                            onClick={(e) => handleRemoveFromWatchlist(movie.id, e)}
+                            className="absolute top-2 right-2 bg-red-600/80 hover:bg-red-600 backdrop-blur-sm rounded-full p-1.5 opacity-0 group-hover:opacity-100 transition-all duration-300 hover:scale-110"
+                            aria-label="Remove from watchlist"
+                          >
+                            <Trash2 className="w-3 h-3 sm:w-4 sm:h-4 text-white" />
+                          </button>
 
-                      {/* Release Date */}
-                      <div className="flex items-center text-sm text-gray-300 mb-2">
-                        <Calendar className="w-4 h-4 mr-1" />
-                        {formatReleaseDate(movie.release_date)}
-                      </div>
-
-                      {/* Genres */}
-                      {movie.genres && movie.genres.length > 0 && (
-                        <div className="flex flex-wrap gap-1 mb-3">
-                          {movie.genres.slice(0, 2).map((genre) => (
-                            <Badge key={genre.id} variant="outline" className="border-purple-400/50 text-purple-200 text-xs">
-                              {genre.name}
-                            </Badge>
-                          ))}
+                          {/* Release Year */}
+                          {movie.release_date && (
+                            <div className="absolute bottom-2 left-2 bg-black/80 backdrop-blur-sm rounded px-2 py-1">
+                              <div className="flex items-center space-x-1">
+                                <Calendar className="w-3 h-3 text-gray-300" />
+                                <span className="text-white text-xs font-medium">{new Date(movie.release_date).getFullYear()}</span>
+                              </div>
+                            </div>
+                          )}
                         </div>
-                      )}
 
-                      {/* Overview */}
-                      <p className="text-gray-300 text-sm line-clamp-3 mb-3">{movie.overview}</p>
+                        {/* Movie Info */}
+                        <div className="space-y-1">
+                          <h3 className="text-white font-semibold text-sm sm:text-base line-clamp-2 group-hover:text-purple-300 transition-colors">
+                            {movie.title}
+                          </h3>
+                          {movie.overview && <p className="text-gray-400 text-xs sm:text-sm line-clamp-2">{movie.overview}</p>}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
 
-                      {/* Added Date */}
-                      <p className="text-xs text-purple-300">Added {formatAddedDate(movie.addedAt)}</p>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            )}
+                  {/* Watchlist Stats */}
+                  <div className="text-center">
+                    <div className="bg-white/10 rounded-lg p-4 sm:p-6 lg:p-8 max-w-md mx-auto">
+                      <h3 className="text-lg sm:text-xl font-semibold text-white mb-3">Watchlist Stats</h3>
+                      <div className="grid grid-cols-2 gap-4 text-center">
+                        <div>
+                          <p className="text-2xl sm:text-3xl font-bold text-purple-400">{watchlist.length}</p>
+                          <p className="text-gray-400 text-xs sm:text-sm">Total Movies</p>
+                        </div>
+                        <div>
+                          <p className="text-2xl sm:text-3xl font-bold text-yellow-400">
+                            {watchlist.length > 0
+                              ? (watchlist.reduce((sum, movie) => sum + movie.vote_average, 0) / watchlist.length).toFixed(1)
+                              : "0.0"}
+                          </p>
+                          <p className="text-gray-400 text-xs sm:text-sm">Avg Rating</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
           </main>
         </div>
       </div>

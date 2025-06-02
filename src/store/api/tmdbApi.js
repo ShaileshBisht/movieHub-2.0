@@ -16,9 +16,30 @@ export const tmdbApi = createApi({
   endpoints: (builder) => ({
     // Get trending movies
     getTrendingMovies: builder.query({
-      query: (timeWindow = "week") => `/trending/movie/${timeWindow}?api_key=${API_KEY}&language=en-US`,
+      query: ({ page = 1 } = {}) => `/trending/movie/week?api_key=${API_KEY}&language=en-US&page=${page}`,
       providesTags: ["TrendingMovies"],
       keepUnusedDataFor: 30, // Keep data for only 30 seconds
+    }),
+
+    // Get movies by category (unified endpoint)
+    getMoviesByCategory: builder.query({
+      query: ({ category, page = 1 }) => {
+        const endpoints = {
+          popular: `/movie/popular?api_key=${API_KEY}&language=en-US&page=${page}`,
+          top_rated: `/movie/top_rated?api_key=${API_KEY}&language=en-US&page=${page}`,
+          now_playing: `/movie/now_playing?api_key=${API_KEY}&language=en-US&page=${page}`,
+          upcoming: `/movie/upcoming?api_key=${API_KEY}&language=en-US&page=${page}`,
+        };
+        return endpoints[category] || endpoints.popular;
+      },
+      providesTags: ["Movies"],
+    }),
+
+    // Get movies by genre
+    getMoviesByGenre: builder.query({
+      query: ({ genreId, page = 1 }) =>
+        `/discover/movie?api_key=${API_KEY}&language=en-US&with_genres=${genreId}&page=${page}&sort_by=popularity.desc`,
+      providesTags: ["Movies"],
     }),
 
     // Get popular movies
@@ -100,6 +121,8 @@ export const tmdbApi = createApi({
 
 export const {
   useGetTrendingMoviesQuery,
+  useGetMoviesByCategoryQuery,
+  useGetMoviesByGenreQuery,
   useGetPopularMoviesQuery,
   useGetTopRatedMoviesQuery,
   useGetNowPlayingMoviesQuery,

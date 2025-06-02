@@ -1,92 +1,18 @@
 "use client";
 
-import { Suspense, useState, useEffect } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Search, Heart } from "lucide-react";
-import MovieGrid from "@/components/MovieGrid";
-import Sidebar from "@/components/ui/sidebar";
-import { getWatchlistCount } from "@/utils/watchlist";
+import { useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { Menu, X } from "lucide-react";
+import MovieGrid from "../components/MovieGrid";
+import Sidebar from "../components/ui/sidebar";
+import WatchlistButton from "../components/WatchlistButton";
+import SearchBar from "../components/SearchBar";
+import { useNavigation } from "../hooks/useNavigation";
 
-function SearchBar() {
-  const router = useRouter();
+export default function HomePage() {
   const searchParams = useSearchParams();
-  const [searchQuery, setSearchQuery] = useState(searchParams.get("search") || "");
-
-  const handleSearch = () => {
-    if (searchQuery.trim()) {
-      const params = new URLSearchParams();
-      params.set("search", searchQuery.trim());
-      params.set("page", "1");
-      router.push(`/?${params.toString()}`);
-    }
-  };
-
-  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter") {
-      handleSearch();
-    }
-  };
-
-  return (
-    <div className="flex gap-2 max-w-md mx-auto">
-      <Input
-        type="text"
-        placeholder="Search movies..."
-        value={searchQuery}
-        onChange={(e) => setSearchQuery(e.target.value)}
-        onKeyPress={handleKeyPress}
-        className="bg-white/10 border-white/20 text-white placeholder:text-gray-400"
-      />
-      <Button onClick={handleSearch} className="bg-purple-600 hover:bg-purple-700">
-        <Search className="w-4 h-4" />
-      </Button>
-    </div>
-  );
-}
-
-function WatchlistButton() {
-  const router = useRouter();
-  const [watchlistCount, setWatchlistCount] = useState(0);
-
-  useEffect(() => {
-    // Update count on mount
-    setWatchlistCount(getWatchlistCount());
-
-    // Listen for watchlist updates
-    const handleWatchlistUpdate = () => {
-      setWatchlistCount(getWatchlistCount());
-    };
-
-    window.addEventListener("watchlistUpdated", handleWatchlistUpdate);
-    return () => window.removeEventListener("watchlistUpdated", handleWatchlistUpdate);
-  }, []);
-
-  const handleWatchlistClick = () => {
-    router.push("/watchlist");
-  };
-
-  return (
-    <Button
-      onClick={handleWatchlistClick}
-      variant="outline"
-      className="border-pink-500/50 text-pink-300 hover:bg-pink-500/20 hover:border-pink-400 relative"
-    >
-      <Heart className="w-4 h-4 mr-2" />
-      Watchlist
-      {watchlistCount > 0 && (
-        <span className="absolute -top-2 -right-2 bg-pink-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-bold">
-          {watchlistCount > 99 ? "99+" : watchlistCount}
-        </span>
-      )}
-    </Button>
-  );
-}
-
-function HomePage() {
-  const router = useRouter();
-  const searchParams = useSearchParams();
+  const { navigateToCategory, navigateToGenre, navigateToSearch } = useNavigation();
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   const category = searchParams.get("category");
   const genre = searchParams.get("genre") ? parseInt(searchParams.get("genre")!) : null;
@@ -94,62 +20,88 @@ function HomePage() {
   const currentPage = parseInt(searchParams.get("page") || "1");
 
   const handleCategorySelect = (categoryId: string | null) => {
-    const params = new URLSearchParams();
-    if (categoryId) {
-      params.set("category", categoryId);
-    }
-    params.set("page", "1");
-    router.push(`/?${params.toString()}`);
+    navigateToCategory(categoryId);
+    setIsSidebarOpen(false); // Close sidebar on mobile after selection
   };
 
   const handleGenreSelect = (genreId: number | null) => {
-    const params = new URLSearchParams();
-    if (genreId) {
-      params.set("genre", genreId.toString());
-    }
-    params.set("page", "1");
-    router.push(`/?${params.toString()}`);
+    navigateToGenre(genreId);
+    setIsSidebarOpen(false); // Close sidebar on mobile after selection
+  };
+
+  const handleSearch = (query: string) => {
+    navigateToSearch(query);
+  };
+
+  const toggleSidebar = () => {
+    setIsSidebarOpen(!isSidebarOpen);
   };
 
   return (
-    <div className="flex h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
-      {/* Sidebar */}
-      <Sidebar
-        onCategorySelect={handleCategorySelect}
-        onGenreSelect={handleGenreSelect}
-        selectedCategory={!genre && !search ? category : null}
-        selectedGenre={genre}
-        onToggle={() => {}}
-      />
+    <div className="h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 flex overflow-hidden">
+      {/* Mobile Sidebar Overlay */}
+      {isSidebarOpen && <div className="fixed inset-0 bg-black/50 z-40 lg:hidden" onClick={() => setIsSidebarOpen(false)} />}
+
+      {/* Sidebar - Always visible on desktop, toggleable on mobile */}
+      <div
+        className={`
+        fixed lg:static inset-y-0 left-0 z-50 w-64 xl:w-72 
+        bg-black/90 backdrop-blur-sm transform transition-transform duration-300 ease-in-out
+        ${isSidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
+        lg:flex lg:flex-col
+      `}
+      >
+        {/* Mobile Close Button */}
+        <button onClick={() => setIsSidebarOpen(false)} className="absolute top-4 right-4 text-white hover:text-gray-300 lg:hidden z-10">
+          <X className="w-6 h-6" />
+        </button>
+
+        <Sidebar
+          selectedCategory={category}
+          selectedGenre={genre}
+          onCategorySelect={handleCategorySelect}
+          onGenreSelect={handleGenreSelect}
+          onToggle={() => {}}
+        />
+      </div>
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col overflow-hidden">
+      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* Header */}
-        <header className="border-b border-white/10 backdrop-blur-sm bg-black/20 flex-shrink-0">
-          <div className="container mx-auto px-4 py-4">
-            <div className="flex items-center justify-between">
-              <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">MovieHub</h1>
-              <div className="flex items-center gap-4">
-                <SearchBar />
-                <WatchlistButton />
+        <header className="flex-shrink-0 bg-black/20 backdrop-blur-md border-b border-white/10">
+          <div className="px-4 sm:px-6 lg:px-8 py-4">
+            <div className="flex items-center gap-3 sm:gap-4">
+              {/* Mobile Menu Button */}
+              <button onClick={toggleSidebar} className="lg:hidden text-white hover:text-gray-300 p-1">
+                <Menu className="w-6 h-6" />
+              </button>
+
+              {/* Logo - Hidden on desktop since it's in sidebar */}
+              <div className="flex items-center gap-2 sm:gap-3 lg:hidden">
+                <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg flex items-center justify-center">
+                  <span className="text-white font-bold text-lg sm:text-xl">M</span>
+                </div>
+                <h1 className="text-xl sm:text-2xl font-bold text-white">
+                  Movie<span className="text-purple-400">Hub</span>
+                </h1>
               </div>
+
+              {/* Search Bar */}
+              <div className="flex-1 flex justify-center px-2 sm:px-4">
+                <SearchBar onSearch={handleSearch} />
+              </div>
+
+              {/* Watchlist Button */}
+              <WatchlistButton />
             </div>
           </div>
         </header>
 
-        {/* Scrollable Content */}
-        <main className="flex-1 overflow-y-auto">
+        {/* Main Content Area - Scrollable */}
+        <main className="flex-1 overflow-y-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
           <MovieGrid category={category} genre={genre} search={search} currentPage={currentPage} />
         </main>
       </div>
     </div>
-  );
-}
-
-export default function Page() {
-  return (
-    <Suspense fallback={<div>Loading...</div>}>
-      <HomePage />
-    </Suspense>
   );
 }
