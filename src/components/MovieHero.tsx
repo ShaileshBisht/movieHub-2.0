@@ -89,7 +89,15 @@ export default function MovieHero({
             )}
 
             {onToggleWatchlist && (
-              <Button onClick={onToggleWatchlist} variant="outline" className="border-white/20 text-white hover:bg-white/10">
+              <Button
+                onClick={onToggleWatchlist}
+                variant="outline"
+                className={`border-2 transition-all duration-200 ${
+                  isInWatchlist
+                    ? "bg-green-600/90 border-green-500 text-white hover:bg-green-700/90 hover:border-green-400"
+                    : "bg-purple-600/90 border-purple-500 text-white hover:bg-purple-700/90 hover:border-purple-400"
+                } backdrop-blur-sm`}
+              >
                 {isInWatchlist ? (
                   <>
                     <Check className="w-4 h-4 mr-2" />
