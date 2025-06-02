@@ -1,103 +1,155 @@
-import Image from "next/image";
+"use client";
 
-export default function Home() {
+import { Suspense, useState, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Search, Heart } from "lucide-react";
+import MovieGrid from "@/components/MovieGrid";
+import Sidebar from "@/components/ui/sidebar";
+import { getWatchlistCount } from "@/utils/watchlist";
+
+function SearchBar() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const [searchQuery, setSearchQuery] = useState(searchParams.get("search") || "");
+
+  const handleSearch = () => {
+    if (searchQuery.trim()) {
+      const params = new URLSearchParams();
+      params.set("search", searchQuery.trim());
+      params.set("page", "1");
+      router.push(`/?${params.toString()}`);
+    }
+  };
+
+  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      handleSearch();
+    }
+  };
+
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm/6 text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-[family-name:var(--font-geist-mono)] font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
-
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+    <div className="flex gap-2 max-w-md mx-auto">
+      <Input
+        type="text"
+        placeholder="Search movies..."
+        value={searchQuery}
+        onChange={(e) => setSearchQuery(e.target.value)}
+        onKeyPress={handleKeyPress}
+        className="bg-white/10 border-white/20 text-white placeholder:text-gray-400"
+      />
+      <Button onClick={handleSearch} className="bg-purple-600 hover:bg-purple-700">
+        <Search className="w-4 h-4" />
+      </Button>
     </div>
+  );
+}
+
+function WatchlistButton() {
+  const router = useRouter();
+  const [watchlistCount, setWatchlistCount] = useState(0);
+
+  useEffect(() => {
+    // Update count on mount
+    setWatchlistCount(getWatchlistCount());
+
+    // Listen for watchlist updates
+    const handleWatchlistUpdate = () => {
+      setWatchlistCount(getWatchlistCount());
+    };
+
+    window.addEventListener("watchlistUpdated", handleWatchlistUpdate);
+    return () => window.removeEventListener("watchlistUpdated", handleWatchlistUpdate);
+  }, []);
+
+  const handleWatchlistClick = () => {
+    router.push("/watchlist");
+  };
+
+  return (
+    <Button
+      onClick={handleWatchlistClick}
+      variant="outline"
+      className="border-pink-500/50 text-pink-300 hover:bg-pink-500/20 hover:border-pink-400 relative"
+    >
+      <Heart className="w-4 h-4 mr-2" />
+      Watchlist
+      {watchlistCount > 0 && (
+        <span className="absolute -top-2 -right-2 bg-pink-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-bold">
+          {watchlistCount > 99 ? "99+" : watchlistCount}
+        </span>
+      )}
+    </Button>
+  );
+}
+
+function HomePage() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
+  const category = searchParams.get("category");
+  const genre = searchParams.get("genre") ? parseInt(searchParams.get("genre")!) : null;
+  const search = searchParams.get("search");
+  const currentPage = parseInt(searchParams.get("page") || "1");
+
+  const handleCategorySelect = (categoryId: string | null) => {
+    const params = new URLSearchParams();
+    if (categoryId) {
+      params.set("category", categoryId);
+    }
+    params.set("page", "1");
+    router.push(`/?${params.toString()}`);
+  };
+
+  const handleGenreSelect = (genreId: number | null) => {
+    const params = new URLSearchParams();
+    if (genreId) {
+      params.set("genre", genreId.toString());
+    }
+    params.set("page", "1");
+    router.push(`/?${params.toString()}`);
+  };
+
+  return (
+    <div className="flex h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+      {/* Sidebar */}
+      <Sidebar
+        onCategorySelect={handleCategorySelect}
+        onGenreSelect={handleGenreSelect}
+        selectedCategory={!genre && !search ? category : null}
+        selectedGenre={genre}
+        onToggle={() => {}}
+      />
+
+      {/* Main Content */}
+      <div className="flex-1 flex flex-col overflow-hidden">
+        {/* Header */}
+        <header className="border-b border-white/10 backdrop-blur-sm bg-black/20 flex-shrink-0">
+          <div className="container mx-auto px-4 py-4">
+            <div className="flex items-center justify-between">
+              <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">MovieHub</h1>
+              <div className="flex items-center gap-4">
+                <SearchBar />
+                <WatchlistButton />
+              </div>
+            </div>
+          </div>
+        </header>
+
+        {/* Scrollable Content */}
+        <main className="flex-1 overflow-y-auto">
+          <MovieGrid category={category} genre={genre} search={search} currentPage={currentPage} />
+        </main>
+      </div>
+    </div>
+  );
+}
+
+export default function Page() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <HomePage />
+    </Suspense>
   );
 }
