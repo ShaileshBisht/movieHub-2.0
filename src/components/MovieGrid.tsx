@@ -1,19 +1,16 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Star, Calendar, Loader2, AlertCircle } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Loader2, AlertCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useDispatch } from "react-redux";
 import {
   useGetTrendingMoviesQuery,
   useGetMoviesByCategoryQuery,
   useGetMoviesByGenreQuery,
   useSearchMoviesQuery,
-  tmdbApi,
 } from "../store/api/tmdbApi";
 import MovieCard from "./ui/movie-card";
+import Pagination from "./ui/pagination";
 import { Movie } from "@/types/movie";
 
 interface MovieGridProps {
@@ -34,13 +31,7 @@ const formatReleaseDate = (dateString: string) => {
 
 export default function MovieGrid({ category, genre, search, currentPage }: MovieGridProps) {
   const router = useRouter();
-  const dispatch = useDispatch();
-  const [allMovies, setAllMovies] = useState<Movie[]>([]);
-  const [isLoadingMore, setIsLoadingMore] = useState(false);
-  const [page, setPage] = useState(1);
-  const [hasMore, setHasMore] = useState(true);
-  const observerRef = useRef<IntersectionObserver | null>(null);
-  const loadingRef = useRef<HTMLDivElement>(null);
+  const [page, setPage] = useState(currentPage || 1);
 
   // Determine which query to use
   const shouldSkipTrending = !!(category && category !== "trending") || !!genre || !!search;
@@ -53,14 +44,10 @@ export default function MovieGrid({ category, genre, search, currentPage }: Movi
     data: trendingData,
     isLoading: trendingLoading,
     error: trendingError,
-    refetch: refetchTrending,
   } = useGetTrendingMoviesQuery(
     { page },
     {
       skip: shouldSkipTrending,
-      refetchOnMountOrArgChange: 30,
-      refetchOnFocus: true,
-      refetchOnReconnect: true,
     }
   );
 
@@ -72,7 +59,6 @@ export default function MovieGrid({ category, genre, search, currentPage }: Movi
     { category: category!, page },
     {
       skip: shouldSkipCategory,
-      refetchOnMountOrArgChange: true,
     }
   );
 
@@ -84,7 +70,6 @@ export default function MovieGrid({ category, genre, search, currentPage }: Movi
     { genreId: genre!, page },
     {
       skip: shouldSkipGenre,
-      refetchOnMountOrArgChange: true,
     }
   );
 
@@ -96,7 +81,6 @@ export default function MovieGrid({ category, genre, search, currentPage }: Movi
     { query: search!, page },
     {
       skip: shouldSkipSearch,
-      refetchOnMountOrArgChange: true,
     }
   );
 
@@ -105,61 +89,26 @@ export default function MovieGrid({ category, genre, search, currentPage }: Movi
   const isLoading = search ? searchLoading : genre ? genreLoading : category && category !== "trending" ? categoryLoading : trendingLoading;
   const error = search ? searchError : genre ? genreError : category && category !== "trending" ? categoryError : trendingError;
 
-  // Reset state when route changes
+  // Reset page when filters change
   useEffect(() => {
-    setAllMovies([]);
     setPage(1);
-    setHasMore(true);
-    setIsLoadingMore(false);
   }, [category, genre, search]);
 
-  // Update movies when data changes
-  useEffect(() => {
-    if (currentData?.results) {
-      if (page === 1) {
-        setAllMovies(currentData.results);
-      } else {
-        setAllMovies((prev) => [...prev, ...currentData.results]);
-      }
-      setHasMore(page < (currentData.total_pages || 1));
-      setIsLoadingMore(false);
-    }
-  }, [currentData, page]);
+  // Update URL when page changes
+  const handlePageChange = (newPage: number) => {
+    setPage(newPage);
 
-  // Infinite scroll
-  const loadMore = useCallback(() => {
-    if (!isLoadingMore && hasMore && !isLoading) {
-      setIsLoadingMore(true);
-      setPage((prev) => prev + 1);
-    }
-  }, [isLoadingMore, hasMore, isLoading]);
+    // Update URL with new page
+    const params = new URLSearchParams();
+    if (category && category !== "trending") params.set("category", category);
+    if (genre) params.set("genre", genre.toString());
+    if (search) params.set("search", search);
+    if (newPage > 1) params.set("page", newPage.toString());
 
-  useEffect(() => {
-    const currentLoadingRef = loadingRef.current;
-
-    if (observerRef.current) {
-      observerRef.current.disconnect();
-    }
-
-    observerRef.current = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting) {
-          loadMore();
-        }
-      },
-      { threshold: 0.1 }
-    );
-
-    if (currentLoadingRef) {
-      observerRef.current.observe(currentLoadingRef);
-    }
-
-    return () => {
-      if (observerRef.current) {
-        observerRef.current.disconnect();
-      }
-    };
-  }, [loadMore]);
+    const queryString = params.toString();
+    const newUrl = queryString ? `/?${queryString}` : "/";
+    router.push(newUrl, { scroll: false });
+  };
 
   // Get display title
   const getDisplayTitle = () => {
@@ -184,7 +133,7 @@ export default function MovieGrid({ category, genre, search, currentPage }: Movi
     return "Trending Movies";
   };
 
-  if (isLoading && page === 1) {
+  if (isLoading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[50vh] space-y-4">
         <Loader2 className="w-8 h-8 sm:w-12 sm:h-12 animate-spin text-purple-500" />
@@ -207,7 +156,7 @@ export default function MovieGrid({ category, genre, search, currentPage }: Movi
     );
   }
 
-  if (!allMovies.length && !isLoading) {
+  if (!currentData?.results?.length && !isLoading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[50vh] space-y-4 px-4">
         <div className="text-center">
@@ -227,37 +176,30 @@ export default function MovieGrid({ category, genre, search, currentPage }: Movi
         <div>
           <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white">{getDisplayTitle()}</h2>
           <p className="text-gray-400 text-sm sm:text-base mt-1">
-            {allMovies.length} movie{allMovies.length !== 1 ? "s" : ""} found
+            {currentData?.results?.length || 0} movies on this page
+            {currentData?.total_results && ` of ${currentData.total_results.toLocaleString()} total`}
           </p>
         </div>
       </div>
 
       {/* Movies Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
-        {allMovies.map((movie, index) => (
+        {currentData?.results?.map((movie: Movie, index: number) => (
           <div key={`${movie.id}-${index}`} className="w-full">
             <MovieCard movie={movie} />
           </div>
         ))}
       </div>
 
-      {/* Loading More Indicator */}
-      {hasMore && (
-        <div ref={loadingRef} className="flex justify-center py-6 sm:py-8">
-          {isLoadingMore && (
-            <div className="flex items-center space-x-2">
-              <Loader2 className="w-5 h-5 sm:w-6 sm:h-6 animate-spin text-purple-500" />
-              <span className="text-gray-400 text-sm sm:text-base">Loading more movies...</span>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* End of Results */}
-      {!hasMore && allMovies.length > 0 && (
-        <div className="text-center py-6 sm:py-8">
-          <p className="text-gray-400 text-sm sm:text-base">You've reached the end of the list</p>
-        </div>
+      {/* Pagination Controls */}
+      {currentData && (
+        <Pagination
+          currentPage={page}
+          totalPages={currentData.total_pages || 1}
+          totalResults={currentData.total_results}
+          maxPages={100}
+          onPageChange={handlePageChange}
+        />
       )}
     </div>
   );
