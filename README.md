@@ -50,18 +50,68 @@ bun install
 
 ### 2. Environment Setup
 
-The project uses The Movie Database (TMDB) API. The environment variables are already configured in `.env.local`:
+The project uses The Movie Database (TMDB) API to fetch movie data. You need to set up environment variables for the API to work properly.
 
-- `NEXT_PUBLIC_TMDB_API_KEY` - TMDB API key
-- `NEXT_PUBLIC_TMDB_ACCESS_TOKEN` - TMDB access token
-- `NEXT_PUBLIC_TMDB_BASE_URL` - TMDB API base URL
-- `NEXT_PUBLIC_TMDB_IMAGE_BASE_URL` - TMDB image base URL
+#### Environment File (`.env.local`)
 
-**Note:** If you want to use your own TMDB API credentials:
+Create a `.env.local` file in the root directory of the project (same level as `package.json`) with the following variables:
 
-1. Create an account at [The Movie Database](https://www.themoviedb.org/)
-2. Get your API key from the API settings
-3. Update the values in `.env.local`
+```env
+NEXT_PUBLIC_TMDB_API_KEY=your_tmdb_api_key_here
+NEXT_PUBLIC_TMDB_ACCESS_TOKEN=your_tmdb_access_token_here
+NEXT_PUBLIC_TMDB_BASE_URL=https://api.themoviedb.org/3
+NEXT_PUBLIC_TMDB_IMAGE_BASE_URL=https://image.tmdb.org/t/p
+```
+
+#### Environment Variables Explained:
+
+- **`NEXT_PUBLIC_TMDB_API_KEY`** - Your TMDB API key (v3 auth)
+- **`NEXT_PUBLIC_TMDB_ACCESS_TOKEN`** - Your TMDB Read Access Token (v4 auth)
+- **`NEXT_PUBLIC_TMDB_BASE_URL`** - Base URL for TMDB API endpoints
+- **`NEXT_PUBLIC_TMDB_IMAGE_BASE_URL`** - Base URL for TMDB image assets
+
+#### How to Get TMDB API Credentials:
+
+1. **Create a TMDB Account:**
+
+   - Go to [The Movie Database](https://www.themoviedb.org/)
+   - Sign up for a free account
+
+2. **Get API Key:**
+
+   - Go to your account settings
+   - Navigate to the "API" section
+   - Request an API key (choose "Developer" option)
+   - Fill out the application form
+   - Once approved, you'll get your API key
+
+3. **Get Access Token:**
+
+   - In the same API section
+   - You'll find your "Read Access Token"
+   - This is used for v4 API authentication
+
+4. **Update Environment File:**
+   - Replace `your_tmdb_api_key_here` with your actual API key
+   - Replace `your_tmdb_access_token_here` with your actual access token
+
+#### Important Notes:
+
+- ⚠️ **Never commit your `.env.local` file to version control** - it contains sensitive API keys
+- 🔒 The `.env.local` file is already included in `.gitignore`
+- 🌐 Variables prefixed with `NEXT_PUBLIC_` are exposed to the browser
+- 🔄 Restart the development server after changing environment variables
+- 📁 The `.env.local` file should be in the project root, not in the `src` folder
+
+#### Example `.env.local` structure:
+
+```
+movie-hub/
+├── .env.local          ← Environment file goes here
+├── package.json
+├── src/
+└── ...
+```
 
 ## Running the Project
 
