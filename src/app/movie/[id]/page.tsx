@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, Suspense, use } from "react";
+import { useState, Suspense, use } from "react";
 import {
   useGetMovieDetailsQuery,
   useGetMovieCreditsQuery,
@@ -24,8 +24,8 @@ import { Button } from "@/components/ui/button";
 function MovieDetailsContent({ movieId }: { movieId: string }) {
   const [selectedVideo, setSelectedVideo] = useState<VideoType | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [selectedCategory, setSelectedCategory] = useState<string | null>("trending");
-  const [selectedGenre, setSelectedGenre] = useState<number | null>(null);
+  const [selectedCategory] = useState<string | null>("trending");
+  const [selectedGenre] = useState<number | null>(null);
 
   const { data: movie, isLoading, error } = useGetMovieDetailsQuery(movieId);
   const { data: credits } = useGetMovieCreditsQuery(movieId);
@@ -96,7 +96,6 @@ function MovieDetailsContent({ movieId }: { movieId: string }) {
           selectedGenre={selectedGenre}
           onCategorySelect={handleCategorySelect}
           onGenreSelect={handleGenreSelect}
-          onToggle={() => setIsSidebarOpen(!isSidebarOpen)}
         />
       </div>
 

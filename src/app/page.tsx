@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { Menu, X } from "lucide-react";
 import MovieGrid from "../components/MovieGrid";
@@ -9,7 +9,7 @@ import WatchlistButton from "../components/WatchlistButton";
 import SearchBar from "../components/SearchBar";
 import { useNavigation } from "../hooks/useNavigation";
 
-export default function HomePage() {
+function HomePageContent() {
   const searchParams = useSearchParams();
   const { navigateToCategory, navigateToGenre, navigateToSearch } = useNavigation();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -61,7 +61,6 @@ export default function HomePage() {
           selectedGenre={genre}
           onCategorySelect={handleCategorySelect}
           onGenreSelect={handleGenreSelect}
-          onToggle={() => {}}
         />
       </div>
 
@@ -103,5 +102,22 @@ export default function HomePage() {
         </main>
       </div>
     </div>
+  );
+}
+
+export default function HomePage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 flex items-center justify-center">
+          <div className="text-white text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-4"></div>
+            <p>Loading...</p>
+          </div>
+        </div>
+      }
+    >
+      <HomePageContent />
+    </Suspense>
   );
 }

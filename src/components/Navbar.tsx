@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Search, Menu, X, Home, Heart, Film } from "lucide-react";
+import { Menu, X, Home, Heart, Film } from "lucide-react";
 import { useNavigation } from "../hooks/useNavigation";
 import { useWatchlist } from "../hooks/useWatchlist";
 import SearchBar from "./SearchBar";
@@ -10,19 +10,11 @@ interface NavbarProps {
   onSidebarToggle?: () => void;
   isSidebarOpen?: boolean;
   onSearch?: (query: string) => void;
-  searchQuery?: string;
   showLogo?: boolean;
   className?: string;
 }
 
-export default function Navbar({
-  onSidebarToggle,
-  isSidebarOpen = false,
-  onSearch,
-  searchQuery = "",
-  showLogo = true,
-  className = "",
-}: NavbarProps) {
+export default function Navbar({ onSidebarToggle, isSidebarOpen = false, onSearch, showLogo = true, className = "" }: NavbarProps) {
   const { navigateToHome, navigateToWatchlist } = useNavigation();
   const { getWatchlistCount } = useWatchlist();
   const [watchlistCount, setWatchlistCount] = useState(0);

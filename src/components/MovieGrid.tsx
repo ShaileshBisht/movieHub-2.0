@@ -20,15 +20,6 @@ interface MovieGridProps {
   currentPage: number;
 }
 
-const getImageUrl = (path: string | null, size: string = "w500") => {
-  if (!path) return "/placeholder-movie.jpg";
-  return `https://image.tmdb.org/t/p/${size}${path}`;
-};
-
-const formatReleaseDate = (dateString: string) => {
-  return new Date(dateString).getFullYear();
-};
-
 export default function MovieGrid({ category, genre, search, currentPage }: MovieGridProps) {
   const router = useRouter();
   const [page, setPage] = useState(currentPage || 1);
@@ -149,7 +140,7 @@ export default function MovieGrid({ category, genre, search, currentPage }: Movi
         <div className="text-center">
           <h3 className="text-lg sm:text-xl font-semibold text-white mb-2">Oops! Something went wrong</h3>
           <p className="text-gray-400 text-sm sm:text-base max-w-md">
-            We couldn't load the movies. Please check your connection and try again.
+            We couldn&apos;t load the movies. Please check your connection and try again.
           </p>
         </div>
       </div>

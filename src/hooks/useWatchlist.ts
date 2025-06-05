@@ -15,7 +15,7 @@ interface Movie {
   status: string;
   tagline: string;
   original_language: string;
-  genres: any[];
+  genres: { id: number; name: string }[];
 }
 
 export const useWatchlist = () => {
@@ -47,7 +47,7 @@ export const useWatchlist = () => {
   const removeFromWatchlist = (movieId: number) => {
     if (typeof window !== "undefined") {
       const currentWatchlist = JSON.parse(localStorage.getItem("movieWatchlist") || "[]");
-      const updatedWatchlist = currentWatchlist.filter((item: any) => item.id !== movieId);
+      const updatedWatchlist = currentWatchlist.filter((item: Movie) => item.id !== movieId);
       localStorage.setItem("movieWatchlist", JSON.stringify(updatedWatchlist));
       setWatchlist(updatedWatchlist);
       window.dispatchEvent(new CustomEvent("watchlistUpdated"));

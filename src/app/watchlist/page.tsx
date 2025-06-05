@@ -78,7 +78,6 @@ export default function WatchlistPage() {
           selectedGenre={selectedGenre}
           onCategorySelect={handleCategorySelect}
           onGenreSelect={handleGenreSelect}
-          onToggle={() => setIsSidebarOpen(!isSidebarOpen)}
         />
       </div>
 

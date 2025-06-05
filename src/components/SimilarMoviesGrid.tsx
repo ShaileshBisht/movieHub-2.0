@@ -7,7 +7,7 @@ import { Movie } from "@/types/movie";
 interface SimilarMoviesGridProps {
   movies: Movie[];
   isLoading: boolean;
-  error?: any;
+  error?: unknown;
   title?: string;
 }
 
@@ -27,7 +27,7 @@ export default function SimilarMoviesGrid({ movies, isLoading, error, title = "S
         <AlertCircle className="w-8 h-8 sm:w-12 sm:h-12 text-red-500" />
         <div className="text-center">
           <h3 className="text-lg sm:text-xl font-semibold text-white mb-2">Oops! Something went wrong</h3>
-          <p className="text-gray-400 text-sm sm:text-base max-w-md">We couldn't load similar movies. Please try again later.</p>
+          <p className="text-gray-400 text-sm sm:text-base max-w-md">We couldn&apos;t load similar movies. Please try again later.</p>
         </div>
       </div>
     );
@@ -38,7 +38,7 @@ export default function SimilarMoviesGrid({ movies, isLoading, error, title = "S
       <div className="flex flex-col items-center justify-center min-h-[20vh] space-y-4 px-4">
         <div className="text-center">
           <h3 className="text-lg sm:text-xl font-semibold text-white mb-2">No similar movies found</h3>
-          <p className="text-gray-400 text-sm sm:text-base max-w-md">We couldn't find any similar movies at the moment.</p>
+          <p className="text-gray-400 text-sm sm:text-base max-w-md">We couldn&apos;t find any similar movies at the moment.</p>
         </div>
       </div>
     );

@@ -89,7 +89,7 @@ export interface SimilarMovie {
 export interface Category {
   id: string | null;
   label: string;
-  icon: any;
+  icon: React.ComponentType<{ className?: string }>;
   endpoint: string;
 }
 

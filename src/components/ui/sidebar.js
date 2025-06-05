@@ -1,9 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { ChevronDown, ChevronRight, Film, Star, Calendar, Clock, TrendingUp, Home as HomeIcon, Zap } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { ChevronDown, ChevronRight, Film, Star, Calendar, TrendingUp, Home as HomeIcon, Zap } from "lucide-react";
 import { useGetMovieGenresQuery } from "../../store/api/tmdbApi";
 
 const categories = [
@@ -37,11 +36,11 @@ const genres = [
   { id: 37, name: "Western" },
 ];
 
-export default function Sidebar({ selectedCategory, selectedGenre, onCategorySelect, onGenreSelect, onToggle }) {
+export default function Sidebar({ selectedCategory, selectedGenre, onCategorySelect, onGenreSelect }) {
   const router = useRouter();
   const [isGenresExpanded, setIsGenresExpanded] = useState(false);
 
-  const { data: genresData, isLoading: genresLoading } = useGetMovieGenresQuery();
+  useGetMovieGenresQuery();
 
   const handleCategoryClick = (categoryId) => {
     if (categoryId === null) {
