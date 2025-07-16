@@ -1,65 +1,31 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import { Heart, Star, Calendar, Trash2, Play } from "lucide-react";
 import Sidebar from "@/components/ui/sidebar";
 import Navbar from "../../components/Navbar";
 import { PageLoadingSpinner } from "../../components/LoadingSpinner";
-import { useWatchlist } from "../../hooks/useWatchlist";
-import { useNavigation } from "../../hooks/useNavigation";
 import { getImageUrl } from "../../utils/movieUtils";
 import { Movie } from "../../types/movie";
 import { Button } from "@/components/ui/button";
+import { useWatchlistPage } from "./hooks";
 
 export default function WatchlistPage() {
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-  const [selectedGenre, setSelectedGenre] = useState<number | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-
-  const { watchlist, removeFromWatchlist, clearWatchlist } = useWatchlist();
-  const { navigateToMovie, navigateToCategory, navigateToGenre, navigateToSearch, navigateToHome } = useNavigation();
-
-  useEffect(() => {
-    // Simulate loading time for consistency
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 500);
-
-    return () => clearTimeout(timer);
-  }, []);
-
-  const handleMovieClick = (movieId: number) => {
-    navigateToMovie(movieId);
-  };
-
-  const handleRemoveFromWatchlist = (movieId: number, e: React.MouseEvent) => {
-    e.stopPropagation();
-    removeFromWatchlist(movieId);
-  };
-
-  const handleClearWatchlist = () => {
-    if (watchlist.length > 0) {
-      const confirmed = window.confirm("Are you sure you want to clear your entire watchlist?");
-      if (confirmed) {
-        clearWatchlist();
-      }
-    }
-  };
-
-  const handleCategorySelect = (categoryId: string | null) => {
-    setSelectedCategory(categoryId);
-    navigateToCategory(categoryId);
-  };
-
-  const handleGenreSelect = (genreId: number | null) => {
-    setSelectedGenre(genreId);
-    navigateToGenre(genreId);
-  };
-
-  const handleSearch = (query: string) => {
-    navigateToSearch(query);
-  };
+  const {
+    isSidebarOpen,
+    selectedCategory,
+    selectedGenre,
+    isLoading,
+    watchlist,
+    handleMovieClick,
+    handleRemoveFromWatchlist,
+    handleClearWatchlist,
+    handleCategorySelect,
+    handleGenreSelect,
+    handleSearch,
+    toggleSidebar,
+    closeSidebar,
+    navigateToHome,
+  } = useWatchlistPage();
 
   if (isLoading) {
     return <PageLoadingSpinner text="Loading your watchlist..." />;
@@ -82,12 +48,12 @@ export default function WatchlistPage() {
       </div>
 
       {/* Overlay for mobile */}
-      {isSidebarOpen && <div className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden" onClick={() => setIsSidebarOpen(false)} />}
+      {isSidebarOpen && <div className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden" onClick={closeSidebar} />}
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Navigation */}
-        <Navbar onSidebarToggle={() => setIsSidebarOpen(!isSidebarOpen)} isSidebarOpen={isSidebarOpen} onSearch={handleSearch} />
+        <Navbar onSidebarToggle={toggleSidebar} isSidebarOpen={isSidebarOpen} onSearch={handleSearch} />
 
         {/* Watchlist Content - Scrollable */}
         <div className="flex-1 overflow-y-auto bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900">
@@ -146,7 +112,7 @@ export default function WatchlistPage() {
                             className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
                             loading="lazy"
                             onError={(e) => {
-                              (e.target as HTMLImageElement).src = "/api/placeholder/500/750";
+                              (e.target as HTMLImageElement).src = "/placeholder.png";
                             }}
                           />
 

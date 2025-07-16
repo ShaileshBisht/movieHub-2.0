@@ -81,8 +81,7 @@ export default function MovieCard({ movie }: MovieCardProps) {
           } group-hover:scale-110`}
           onLoad={() => setIsImageLoaded(true)}
           onError={(e) => {
-            e.currentTarget.src = getImageUrl(movie.poster_path);
-            setIsImageLoaded(true);
+            (e.target as HTMLImageElement).src = "/placeholder.png";
           }}
         />
 

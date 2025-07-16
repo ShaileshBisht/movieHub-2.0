@@ -35,7 +35,7 @@ export default function MovieHero({
           alt={movie.title}
           className="w-full h-full object-cover"
           onError={(e) => {
-            (e.target as HTMLImageElement).src = "/api/placeholder/1920/1080";
+            (e.target as HTMLImageElement).src = "/placeholder.png";
           }}
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent" />

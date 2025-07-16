@@ -50,7 +50,7 @@ function CastCard({ person }: CastCardProps) {
           alt={person.name}
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
           onError={(e) => {
-            (e.target as HTMLImageElement).src = "/api/placeholder/185/278";
+            (e.target as HTMLImageElement).src = "/placeholder.png";
           }}
         />
 
